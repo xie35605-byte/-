@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>余英楠 - 生辰礼</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background-color: #000205; /* 极深蓝黑 */
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            height: 100vh;
+            font-family: 'Huiwen Mingchao', 'Songti SC', 'Noto Serif SC', serif;
+            color: #4aa6e1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景画布 */
+        #star-canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+        }
+
+        /* 叠加一层暗角晕染，让文字更清晰 */
+        .vignette {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, #000205 90%);
+            z-index: 1; pointer-events: none;
+        }
+
+        .container { text-align: center; z-index: 10; position: relative; }
+
+        .title {
+            font-size: 32px; font-weight: bold; letter-spacing: 8px;
+            margin-bottom: 10px; color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            animation: fadeIn 2s ease-out;
+        }
+
+        .subtitle {
+            font-size: 14px; color: #aaccff; letter-spacing: 4px;
+            margin-bottom: 50px; opacity: 0; font-weight: 300;
+            animation: fadeIn 2s ease-out 0.8s forwards;
+        }
+
+        .menu-box {
+            display: flex; flex-direction: column; gap: 20px;
+            opacity: 0;
+            animation: moveUp 1.5s ease-out 1.2s forwards;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 16px 0; width: 240px;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 4px; 
+            color: #eef;
+            font-size: 15px; letter-spacing: 3px;
+            background: rgba(10, 30, 50, 0.4);
+            transition: all 0.4s ease;
+            backdrop-filter: blur(4px);
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 按钮悬停光效 */
+        .btn::after {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        .btn:hover::after { left: 100%; }
+
+        .btn:hover {
+            border-color: #ffd700; color: #ffd700;
+            background: rgba(20, 40, 60, 0.6);
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+        }
+
+        .footer {
+            position: absolute; bottom: 30px; z-index: 10;
+            font-size: 10px; color: #445566; letter-spacing: 2px;
+            opacity: 0.6;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes moveUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <canvas id="star-canvas"></canvas>
+    <div class="vignette"></div>
+
+    <div class="container">
+        <div class="title">余英楠 · 生辰礼</div>
+        <div class="subtitle">愿星河长明，岁岁常欢愉</div>
+
+        <div class="menu-box">
+            <a href="fluid.html" class="btn">🌊 流体典藏版 (最新)</a>
+            <a href="star.html" class="btn">✨ 星际穿越版</a>
+            <a href="classic.html" class="btn">⛰️ 千里江山版</a>
+        </div>
+    </div>
+
+    <div class="footer">Happy Birthday</div>
+
+<script>
+/**
+ * 轻量级星空流动特效
+ */
+const canvas = document.getElementById('star-canvas');
+const ctx = canvas.getContext('2d');
+
+let width, height;
+let stars = [];
+
+// 初始化画布
+function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    initStars();
+}
+
+// 星星类
+class Star {
+    constructor() {
+        this.reset(true);
+    }
+
+    reset(initial = false) {
+        this.x = Math.random() * width;
+        // 如果是初始化，y随机分布；如果是重置，从最底下上来
+        this.y = initial ? Math.random() * height : height;
+        this.size = Math.random() * 1.5 + 0.5; // 大小不一
+        this.speedY = Math.random() * 0.3 + 0.1; // 缓慢上升
+        this.speedX = (Math.random() - 0.5) * 0.2; // 微微左右漂浮
+        this.opacity = Math.random() * 0.5 + 0.3;
+        this.fadeDir = 0.005;
+    }
+
+    update() {
+        this.y -= this.speedY;
+        this.x += this.speedX;
+
+        // 闪烁效果
+        this.opacity += this.fadeDir;
+        if(this.opacity > 1 || this.opacity < 0.2) this.fadeDir = -this.fadeDir;
+
+        // 边界检查：跑出去了就重置
+        if (this.y < 0) this.reset();
+    }
+
+    draw() {
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function initStars() {
+    stars = [];
+    // 根据屏幕大小决定星星数量，手机少点，电脑多点
+    const count = width < 600 ? 100 : 250; 
+    for(let i=0; i<count; i++) {
+        stars.push(new Star());
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, width, height);
+    
+    // 绘制微弱的极光背景色 (可选)
+    // ctx.fillStyle = '#000205'; 
+    // ctx.fillRect(0,0,width,height);
+
+    stars.forEach(star => {
+        star.update();
+        star.draw();
+    });
+    requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', resize);
+resize();
+animate();
+</script>
+</body>
+</html>
